@@ -8,6 +8,16 @@ const ts = require('typescript');// typescript 做 TSC 编译（可能直接 npx
 const packageJson = require('./package.json');
 const esbuild = require('esbuild');// esbuild 替代 ncc 进行打包外部包
 
+
+// 拷贝 newer 文件
+let sourcePath_old = 'H:/next911new/next';
+let targetPath_old = 'H:/next911new/my-app/node_modules/next';
+
+// __dirname 是 H:/next911new/next （build.js 所在目录）
+///=== path.resolve(__dirname)：解析为 H:/next911new/next
+let sourcePath = path.resolve(__dirname);  ///===__dirname：表示当前执行的 JS 文件所在的目录（即 next/build.js）。
+let targetPath = path.resolve(__dirname, '../my-app/node_modules/next'); ///=== 解析为 H:/next911new/my-app/node_modules/next
+
  
 
 
@@ -340,39 +350,6 @@ async function compile() {
 
 // ------------------ 封装具体任务 ------------------ //
  
- 
-async function buildAll() {
-  await clearDist();
-  await precompile();
-  await compile();
-
-  console.log('✅ Build all finished!');
-}
-
-
- 
-
-async function watchAll() {
-  const watcher = chokidar.watch([
-    'bin/**/*.{js,ts,tsx}',
-    'cli/**/*.{js,ts,tsx}',
-    'server/**/*.{js,ts,tsx}',
-    'build/**/*.{js,ts,tsx}',
-    'export/**/*.{js,ts,tsx}',
-    'client/**/*.{js,ts,tsx}',
-    'lib/**/*.{js,ts,tsx}',
-    'telemetry/**/*.{js,ts,tsx}',
-    'pages/**/*.{js,ts,tsx}',
-    'next-server/**/*.{js,ts,tsx}'
-  ], { ignoreInitial: true });
-
-  watcher.on('all', async (event, filePath) => {
-    console.log(`> File changed: ${filePath}`);
-    await compile(); // 这里可以做得更细致，比如只重新编译改动的目录
-  });
-
-  console.log('> Watching for changes...');
-}
 
  
 /**
@@ -411,9 +388,47 @@ async function watchAll() {
 
 
 
+ 
+async function buildAll() {
+  await clearDist();
+  await precompile();
+  await compile();
 
 
+          await syncNewerFiles(sourcePath, targetPath); ///=== 同步源目录到目标目录，只有当源文件较新时才复制
 
+  console.log('✅ Build all finished!');
+}
+
+
+ 
+
+async function watchAll() {
+  const watcher = chokidar.watch([
+    'bin/**/*.{js,ts,tsx}',
+    'cli/**/*.{js,ts,tsx}',
+    'server/**/*.{js,ts,tsx}',
+    'build/**/*.{js,ts,tsx}',
+    'export/**/*.{js,ts,tsx}',
+    'client/**/*.{js,ts,tsx}',
+    'lib/**/*.{js,ts,tsx}',
+    'telemetry/**/*.{js,ts,tsx}',
+    'pages/**/*.{js,ts,tsx}',
+    'next-server/**/*.{js,ts,tsx}'
+  ], { ignoreInitial: true });
+
+  watcher.on('all', async (event, filePath) => {
+    console.log(`> File changed: ${filePath}`);
+    await compile(); // 这里可以做得更细致，比如只重新编译改动的目录
+
+ 
+            await syncNewerFiles(sourcePath, targetPath); ///=== 同步源目录到目标目录，只有当源文件较新时才复制
+
+
+  });
+
+  console.log('> Watching for changes...');
+}
 
 
 
@@ -428,10 +443,7 @@ async function main() {
   if (cmd === 'build') {
     await buildAll();
 
-        // 拷贝 newer 文件
-        const sourcePath = 'H:/next911new/next';
-        const targetPath = 'H:/next911new/my-app/node_modules/next';
-        await syncNewerFiles(sourcePath, targetPath);
+
 
   } else if (cmd === 'watch') {
     await buildAll();
