@@ -163,7 +163,7 @@ async function babelCompileDir(srcDir, outDir, { isClient = false, stripExtensio
 // 不需要 npx tsc，速度超快
 // 可选支持 sourceMap
 async function runTSC(srcDir, outDir, extraOptions = {}) {
-  const files = await glob(['**/*.ts', '**/*.tsx', '**/*.d.ts'], {
+  const files = await glob(['**/*.ts', '**/*.tsx', '**/*.d.ts', '**/*.js'], {
     cwd: srcDir,
     absolute: true
   });
@@ -180,11 +180,27 @@ async function runTSC(srcDir, outDir, extraOptions = {}) {
       return;
     }
 
-    if (ext) {
-      // 把 .ts/.tsx 后缀替换成 .js
-      const extRegex = new RegExp(ext.replace('.', '\\.') + '$', 'i');
-      outPath = outPath.replace(extRegex, '.js');
+    // if (ext) {
+    //   // 把 .ts/.tsx 后缀替换成 .js
+    //   const extRegex = new RegExp(ext.replace('.', '\\.') + '$', 'i');
+    //   outPath = outPath.replace(extRegex, '.js');
+    // }
+
+    if (ext === '.d.ts') {
+      await fs.ensureDir(path.dirname(outPath));
+      await fs.copyFile(filePath, outPath);
+      return;
     }
+
+    // if (ext === '.js') {
+    //   // 发现是原始 .js 文件，直接拷贝
+    //   await fs.ensureDir(path.dirname(outPath));
+    //   await fs.copyFile(filePath, outPath);
+    //   return;
+    // }
+
+        // 否则是 .ts 或 .tsx，继续编译
+        outPath = outPath.replace(/\.(ts|tsx)$/i, '.js');
 
     const code = await fs.readFile(filePath, 'utf8');
 
@@ -305,7 +321,7 @@ async function precompile() {
 
 async function compile() {
   await Promise.all([
-    babelCompileDir('bin', 'dist/bin'),
+    babelCompileDir('bin', 'dist/bin' , {  stripExtension : true }),
     babelCompileDir('cli', 'dist/cli'),
     babelCompileDir('server', 'dist/server'),
     babelCompileDir('build', 'dist/build'),
@@ -358,6 +374,50 @@ async function watchAll() {
   console.log('> Watching for changes...');
 }
 
+ 
+/**
+ * 同步源目录到目标目录，只有当源文件较新时才复制
+ */
+ async function syncNewerFiles(srcDir, destDir) {
+  const entries = await fs.readdir(srcDir);
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry);
+    const destPath = path.join(destDir, entry);
+    const stat = await fs.stat(srcPath);
+
+    if (stat.isDirectory()) {
+      await syncNewerFiles(srcPath, destPath);
+    } else {
+      const destExists = await fs.pathExists(destPath);
+      let shouldCopy = true;
+
+      if (destExists) {
+        const destStat = await fs.stat(destPath);
+        if (destStat.mtimeMs >= stat.mtimeMs) {
+          shouldCopy = false;
+        }
+      }
+
+      if (shouldCopy) {
+        await fs.ensureDir(path.dirname(destPath));
+        await fs.copyFile(srcPath, destPath);
+        console.log(`📦 Copied: ${srcPath} -> ${destPath}`);
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 // ====== 命令行接口 ======
 
 // ------------------ CLI控制 ------------------ //
@@ -367,6 +427,12 @@ async function main() {
 
   if (cmd === 'build') {
     await buildAll();
+
+        // 拷贝 newer 文件
+        const sourcePath = 'H:/next911new/next';
+        const targetPath = 'H:/next911new/my-app/node_modules/next';
+        await syncNewerFiles(sourcePath, targetPath);
+
   } else if (cmd === 'watch') {
     await buildAll();
     await watchAll();
