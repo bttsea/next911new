@@ -209,8 +209,16 @@ async function runTSC(srcDir, outDir, extraOptions = {}) {
     //   return;
     // }
 
-        // 否则是 .ts 或 .tsx，继续编译
-        outPath = outPath.replace(/\.(ts|tsx)$/i, '.js');
+
+
+
+
+
+    // 否则是 .ts 或 .tsx，继续编译
+    outPath = outPath.replace(/\.(ts|tsx)$/i, '.js');
+
+
+    
 
     const code = await fs.readFile(filePath, 'utf8');
 
@@ -310,10 +318,34 @@ async function bundleWithEsbuild(packageName, options = {}) {
 
 
 // 清理目录
-async function clearDist() {
+async function clearDist_oldway() {
   await fs.remove('dist');
   console.log('> Cleared dist/');
 }
+
+async function clearDist() {
+  const distPath = path.join(__dirname, 'dist');
+  try {
+    await fs.remove(distPath);
+    console.log('> Cleared dist/');
+  } catch (err) {
+    if (err.code === 'ENOTEMPTY' || err.code === 'EPERM') {
+      console.warn(`⚠️ 目录未完全清空（${err.path}）。可能被占用，尝试强制清除...`);
+      try {
+        fs.rmSync(distPath, { recursive: true, force: true }); // Node 14+
+        console.log('> 强制清理 dist/ 成功');
+      } catch (innerErr) {
+        console.error('❌ 强制清理 dist/ 失败:', innerErr);
+        process.exit(1);
+      }
+    } else {
+      console.error('❌ 清理 dist/ 时出错:', err);
+      process.exit(1);
+    }
+  }
+}
+
+
 
 // ====== 具体任务 ======
 
