@@ -45,8 +45,15 @@ if (typeof window === 'undefined') {
   db = null;
 }
 
+
+
+
+
+
 // 确保数据库加载完成
 function initDatabase() {
+   console.log('[db.js] Initializing NeDB');
+   
   if (!db) {
     console.warn('NeDB is not available on client-side');
     return Promise.reject(new Error('NeDB is not available on client-side'));
@@ -63,6 +70,14 @@ function initDatabase() {
     });
   });
 }
+
+
+
+
+
+
+
+
 
 // 插入数据（示例：初始化一些帖子）
 async function initializeData() {
