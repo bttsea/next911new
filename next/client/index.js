@@ -11,12 +11,17 @@ import {
 } from '../next-server/lib/utils'
 import PageLoader from './page-loader'
 import * as envConfig from '../next-server/lib/runtime-config'
-import { HeadManagerContext } from '../next-server/lib/head-manager-context'
+
 import { DataManagerContext } from '../next-server/lib/data-manager-context'
 import { RouterContext } from '../next-server/lib/router-context'
 import { DataManager } from '../next-server/lib/data-manager'
 import { parse as parseQs, stringify as stringifyQs } from 'querystring'
 import { isDynamicRoute } from '../next-server/lib/router/utils/is-dynamic'
+
+ 
+import { HeadManagerContext } from '../next-server/lib/head';
+
+
 
 // Polyfill Promise globally
 // This is needed because Webpack's dynamic loading(common chunks) code

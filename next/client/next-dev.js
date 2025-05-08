@@ -1,5 +1,5 @@
 import initNext, * as next from './'
-import EventSourcePolyfill from './dev/event-source-polyfill'
+ 
 import initOnDemandEntries from './dev/on-demand-entries-client'
 import initWebpackHMR from './dev/webpack-hot-middleware-client'
 import initializeBuildWatcher from './dev/dev-build-watcher'
@@ -11,10 +11,7 @@ import initializePrerenderIndicator from './dev/prerender-indicator'
 // The runtimeChunk can't hot reload itself currently to correct it when adding pages using on-demand-entries
 // REPLACE_NOOP_IMPORT
 
-// Support EventSource on Internet Explorer 11
-if (!window.EventSource) {
-  window.EventSource = EventSourcePolyfill
-}
+ 
 
 const {
   __NEXT_DATA__: { assetPrefix }

@@ -21,9 +21,9 @@ const defaultCommand = 'dev'
 const commands = {
   build: async () => await import('../cli/next-build').then(i => i.nextBuild),
   start: async () => await import('../cli/next-start').then(i => i.nextStart),
-  export: async () => await import('../cli/next-export').then(i => i.nextExport),
+  ///=== export: async () => await import('../cli/next-export').then(i => i.nextExport),
   dev: async () => await import('../cli/next-dev').then(i => i.nextDev),
-  telemetry: async () => await import('../cli/next-telemetry').then(i => i.nextTelemetry),
+  ///===  telemetry: async () => await import('../cli/next-telemetry').then(i => i.nextTelemetry),
 }
 
 // 解析命令行参数
@@ -46,7 +46,7 @@ if (args['--version']) {
 
 // 判断是否输入了有效子命令
 const foundCommand = Boolean(commands[args._[0]])
-const command = foundCommand ? args._[0] : defaultCommand    ///=== build or  start or export or dev or telemetry
+const command = foundCommand ? args._[0] : defaultCommand    ///=== build or  start or export or dev 
 const forwardedArgs = foundCommand ? args._.slice(1) : args._
 
 // 如果传入了 --inspect，给出提示

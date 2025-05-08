@@ -41,7 +41,8 @@ app.prepare()
     // 其余所有页面和资源交由 Next.js 处理    // ✅ 不处理 /api/*，交由 Next.js 原生 handler 处理
     server.all('*', (req, res) => {
       ///=== !!! console.log('[server.js] Forwarding to Next.js handler:', req.method, req.url);
-      return handle(req, res);
+      return handle(req, res);// 委托给 Next.js，确保 _document.js 被调用  确保 _document.js 被使用）
+
     });
 
     server.listen(3000, (err) => {

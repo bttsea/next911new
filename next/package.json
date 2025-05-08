@@ -34,8 +34,7 @@
     "link.d.ts",
     "router.js",
     "router.d.ts",
-    "amp.js",
-    "amp.d.ts",
+ 
     "types/index.d.ts",
     "types/global.d.ts"
   ],
@@ -49,9 +48,7 @@
   },
  
   "dependencies": {
-    "@ampproject/toolbox-optimizer": "1.0.1",
-    "amphtml-validator": "1.0.23",
-
+ 
 
     "@babel/core": "7.12.10",
     "@babel/plugin-proposal-class-properties": "7.4.4",

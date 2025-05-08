@@ -28,7 +28,8 @@ function getRouteMatcher(routeRegex) {
       }
     });
 
-    console.log('------20250502-----come to -----getRouteMatcher------------ ----------' + params);
+    console.log('---pathname---20250502-----come to -----getRouteMatcher------params------ ----------'  + pathname + ' ---> ' + JSON.stringify(params, null, 4)); 
+    ///=== ---pathname---20250502-----come to -----getRouteMatcher------params------ ----------/posts/VqmBUv7kTYjDpD78 ---> { "id": "VqmBUv7kTYjDpD78" }
 
     return params; // 返回解析后的参数对象
   };

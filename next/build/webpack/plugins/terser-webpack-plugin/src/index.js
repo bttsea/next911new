@@ -1,18 +1,18 @@
-/* eslint-disable
-  no-param-reassign
-*/
-import stringHash from 'string-hash'
-import { SourceMapConsumer } from 'source-map'
-import { SourceMapSource, RawSource } from 'webpack-sources'
-import { RequestShortener } from 'webpack'
-import TaskRunner from './TaskRunner'
-import { sprStatus } from '../../../../babel/plugins/next-page-config'
+/* eslint-disable no-param-reassign */
+const stringHash = require('string-hash');
+const { SourceMapConsumer } = require('source-map');
+const { SourceMapSource, RawSource } = require('webpack-sources');
+const { RequestShortener } = require('webpack');
+const TaskRunner = require('./TaskRunner');
 
-const warningRegex = /\[.+:([0-9]+),([0-9]+)\]/
+// 正则表达式：匹配 JavaScript 文件
+const JS_REGEX = /\.m?js$/;
 
-const JS_REGEX = /\.m?js$/
+// 正则表达式：匹配警告信息中的位置信息
+const warningRegex = /\[.+:([0-9]+),([0-9]+)\]/;
 
-export class TerserPlugin {
+// Terser 插件：压缩 JavaScript 文件
+class TerserPlugin {
   constructor(options = {}) {
     const {
       terserOptions = {},
@@ -21,47 +21,46 @@ export class TerserPlugin {
       cache = false,
       cpus,
       distDir,
-    } = options
+    } = options;
 
-    this.cpus = cpus
-    this.distDir = distDir
+    this.cpus = cpus;
+    this.distDir = distDir;
     this.options = {
       warningsFilter,
       sourceMap,
       cache,
       terserOptions,
-    }
+    };
   }
 
+  // 检查输入是否为有效的源映射
   static isSourceMap(input) {
-    // All required options for `new SourceMapConsumer(...options)`
-    // https://github.com/mozilla/source-map#new-sourcemapconsumerrawsourcemap
     return Boolean(
       input &&
         input.version &&
         input.sources &&
         Array.isArray(input.sources) &&
         typeof input.mappings === 'string'
-    )
+    );
   }
 
+  // 构建源映射对象
   static buildSourceMap(inputSourceMap) {
     if (!inputSourceMap || !TerserPlugin.isSourceMap(inputSourceMap)) {
-      return null
+      return null;
     }
-
-    return new SourceMapConsumer(inputSourceMap)
+    return new SourceMapConsumer(inputSourceMap);
   }
 
+  // 构建错误信息
   static buildError(err, file, sourceMap, requestShortener) {
-    // Handling error which should have line, col, filename and message
     if (err.line) {
       const original =
         sourceMap &&
         sourceMap.originalPositionFor({
           line: err.line,
           column: err.col,
-        })
+        });
 
       if (original && original.source && requestShortener) {
         return new Error(
@@ -70,40 +69,35 @@ export class TerserPlugin {
           )}:${original.line},${original.column}][${file}:${err.line},${
             err.col
           }]`
-        )
+        );
       }
 
       return new Error(
         `${file} from Terser\n${err.message} [${file}:${err.line},${err.col}]`
-      )
+      );
     } else if (err.stack) {
-      return new Error(`${file} from Terser\n${err.stack}`)
+      return new Error(`${file} from Terser\n${err.stack}`);
     }
 
-    return new Error(`${file} from Terser\n${err.message}`)
+    return new Error(`${file} from Terser\n${err.message}`);
   }
 
-  static buildWarning(
-    warning,
-    file,
-    sourceMap,
-    requestShortener,
-    warningsFilter
-  ) {
-    let warningMessage = warning
-    let locationMessage = ''
-    let source = null
+  // 构建警告信息
+  static buildWarning(warning, file, sourceMap, requestShortener, warningsFilter) {
+    let warningMessage = warning;
+    let locationMessage = '';
+    let source = null;
 
     if (sourceMap) {
-      const match = warningRegex.exec(warning)
+      const match = warningRegex.exec(warning);
 
       if (match) {
-        const line = +match[1]
-        const column = +match[2]
+        const line = +match[1];
+        const column = +match[2];
         const original = sourceMap.originalPositionFor({
           line,
           column,
-        })
+        });
 
         if (
           original &&
@@ -111,76 +105,66 @@ export class TerserPlugin {
           original.source !== file &&
           requestShortener
         ) {
-          ;({ source } = original)
-          warningMessage = `${warningMessage.replace(warningRegex, '')}`
-
+          source = original.source;
+          warningMessage = `${warningMessage.replace(warningRegex, '')}`;
           locationMessage = `[${requestShortener.shorten(original.source)}:${
             original.line
-          },${original.column}]`
+          },${original.column}]`;
         }
       }
     }
 
     if (warningsFilter && !warningsFilter(warning, source)) {
-      return null
+      return null;
     }
 
-    return `Terser Plugin: ${warningMessage}${locationMessage}`
+    return `Terser Plugin: ${warningMessage}${locationMessage}`;
   }
 
+  // 应用插件到 Webpack 编译器
   apply(compiler) {
     const optimizeFn = (compilation, chunks, callback) => {
+      // 创建任务运行器
       const taskRunner = new TaskRunner({
         distDir: this.distDir,
         cpus: this.cpus,
         cache: this.options.cache,
-      })
+      });
 
-      const processedAssets = new WeakSet()
-      const tasks = []
+      const processedAssets = new WeakSet();
+      const tasks = [];
 
+      // 收集需要压缩的 JavaScript 文件
       Array.from(chunks)
         .reduce((acc, chunk) => acc.concat(chunk.files || []), [])
         .concat(compilation.additionalChunkAssets || [])
         .filter(file => JS_REGEX.test(file))
         .forEach(file => {
-          let inputSourceMap
-
-          const asset = compilation.assets[file]
+          let inputSourceMap;
+          const asset = compilation.assets[file];
 
           if (processedAssets.has(asset)) {
-            return
+            return;
           }
 
           try {
-            let input
+            let input;
 
             if (this.options.sourceMap && asset.sourceAndMap) {
-              const { source, map } = asset.sourceAndMap()
-
-              input = source
+              const { source, map } = asset.sourceAndMap();
+              input = source;
 
               if (TerserPlugin.isSourceMap(map)) {
-                inputSourceMap = map
+                inputSourceMap = map;
               } else {
-                inputSourceMap = map
-
+                inputSourceMap = map;
                 compilation.warnings.push(
                   new Error(`${file} contains invalid source map`)
-                )
+                );
               }
             } else {
-              input = asset.source()
-              inputSourceMap = null
-            }
-
-            // force dead-code elimination for SPR related code if not used
-            const { compress } = this.options.terserOptions
-            if (compress) {
-              if (!compress.global_defs) {
-                compress.global_defs = {}
-              }
-              compress.global_defs['self.__HAS_SPR'] = !!sprStatus.used
+              input = asset.source();
+              inputSourceMap = null;
             }
 
             const task = {
@@ -188,15 +172,14 @@ export class TerserPlugin {
               input,
               inputSourceMap,
               terserOptions: this.options.terserOptions,
-            }
+            };
 
             if (this.options.cache) {
-              // increment 'a' to invalidate previous caches from different options
-              task.cacheKey = 'a' + stringHash(input)
-              if (this.options.sourceMap) task.cacheKey += 's'
+              task.cacheKey = 'a' + stringHash(input);
+              if (this.options.sourceMap) task.cacheKey += 's';
             }
 
-            tasks.push(task)
+            tasks.push(task);
           } catch (error) {
             compilation.errors.push(
               TerserPlugin.buildError(
@@ -205,29 +188,27 @@ export class TerserPlugin {
                 TerserPlugin.buildSourceMap(inputSourceMap),
                 new RequestShortener(compiler.context)
               )
-            )
+            );
           }
-        })
+        });
 
+      // 执行压缩任务
       taskRunner.run(tasks, (tasksError, results) => {
         if (tasksError) {
-          compilation.errors.push(tasksError)
-
-          return
+          compilation.errors.push(tasksError);
+          return;
         }
 
         results.forEach((data, index) => {
-          const { file, input, inputSourceMap } = tasks[index]
-          const { error, map, code, warnings } = data
+          const { file, input, inputSourceMap } = tasks[index];
+          const { error, map, code, warnings } = data;
 
-          let sourceMap = null
+          let sourceMap = null;
 
           if (error || (warnings && warnings.length > 0)) {
-            sourceMap = TerserPlugin.buildSourceMap(inputSourceMap)
+            sourceMap = TerserPlugin.buildSourceMap(inputSourceMap);
           }
 
-          // Handling results
-          // Error case: add errors, and go to next file
           if (error) {
             compilation.errors.push(
               TerserPlugin.buildError(
@@ -236,12 +217,11 @@ export class TerserPlugin {
                 sourceMap,
                 new RequestShortener(compiler.context)
               )
-            )
-
-            return
+            );
+            return;
           }
 
-          let outputSource
+          let outputSource;
 
           if (map) {
             outputSource = new SourceMapSource(
@@ -250,15 +230,13 @@ export class TerserPlugin {
               JSON.parse(map),
               input,
               inputSourceMap
-            )
+            );
           } else {
-            outputSource = new RawSource(code)
+            outputSource = new RawSource(code);
           }
 
-          // Updating assets
-          processedAssets.add((compilation.assets[file] = outputSource))
+          processedAssets.add((compilation.assets[file] = outputSource));
 
-          // Handling warnings
           if (warnings && warnings.length > 0) {
             warnings.forEach(warning => {
               const builtWarning = TerserPlugin.buildWarning(
@@ -267,47 +245,60 @@ export class TerserPlugin {
                 sourceMap,
                 new RequestShortener(compiler.context),
                 this.options.warningsFilter
-              )
+              );
 
               if (builtWarning) {
-                compilation.warnings.push(builtWarning)
+                compilation.warnings.push(builtWarning);
               }
-            })
+            });
           }
-        })
+        });
 
-        taskRunner.exit()
+        taskRunner.exit();
+        callback();
+      });
+    };
 
-        callback()
-      })
-    }
+    const plugin = { name: this.constructor.name };
 
-    const plugin = { name: this.constructor.name }
-
+    // 注册 Webpack 钩子
     compiler.hooks.compilation.tap(plugin, compilation => {
       if (this.options.sourceMap) {
         compilation.hooks.buildModule.tap(plugin, moduleArg => {
-          // to get detailed location info about errors
-          moduleArg.useSourceMap = true
-        })
+          moduleArg.useSourceMap = true;
+        });
       }
 
-      const { mainTemplate, chunkTemplate } = compilation
+      const { mainTemplate, chunkTemplate } = compilation;
 
-      // Regenerate `contenthash` for minified assets
       for (const template of [mainTemplate, chunkTemplate]) {
         template.hooks.hashForChunk.tap(plugin, hash => {
-          // Terser version
-          // Has to be updated when options change too
-          hash.update('3.17.0')
-          return hash
-        })
+          hash.update('3.17.0');
+          return hash;
+        });
       }
 
       compilation.hooks.optimizeChunkAssets.tapAsync(
         plugin,
         optimizeFn.bind(this, compilation)
-      )
-    })
+      );
+    });
   }
 }
+
+module.exports = TerserPlugin;
+
+
+/*
+插件功能精简，专注于压缩
+
+
+原文件是一个自定义的 TerserPlugin，用于在 Webpack 构建中压缩 JavaScript 文件，支持源映射（source map）、错误处理和缓存。
+保留的核心功能：
+压缩 JavaScript 文件（.js 和 .mjs）。
+支持源映射（sourceMap 选项）。
+错误和警告处理（buildError, buildWarning）。
+缓存支持（cache 选项）。
+多核并行压缩（cpus 选项）。
+/******* */
+

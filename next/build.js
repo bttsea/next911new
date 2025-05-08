@@ -218,7 +218,7 @@ async function runTSC(srcDir, outDir, extraOptions = {}) {
     outPath = outPath.replace(/\.(ts|tsx)$/i, '.js');
 
 
-    
+
 
     const code = await fs.readFile(filePath, 'utf8');
 
@@ -370,7 +370,7 @@ async function compile() {
     babelCompileDir('export', 'dist/export'),
     babelCompileDir('client', 'dist/client', true),
     babelCompileDir('lib', 'dist/lib'),
-    babelCompileDir('telemetry', 'dist/telemetry'),
+ 
     babelCompileDir('pages', 'dist/pages', true),
 
  
@@ -444,7 +444,7 @@ async function watchAll() {
     'export/**/*.{js,ts,tsx}',
     'client/**/*.{js,ts,tsx}',
     'lib/**/*.{js,ts,tsx}',
-    'telemetry/**/*.{js,ts,tsx}',
+ 
     'pages/**/*.{js,ts,tsx}',
     'next-server/**/*.{js,ts,tsx}'
   ], { ignoreInitial: true });
