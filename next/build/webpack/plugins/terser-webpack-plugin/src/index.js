@@ -285,8 +285,12 @@ class TerserPlugin {
     });
   }
 }
-
-module.exports = TerserPlugin;
+ 
+ 
+module.exports = {
+ 
+  TerserPlugin: TerserPlugin
+};
 
 
 /*
@@ -300,5 +304,18 @@ module.exports = TerserPlugin;
 错误和警告处理（buildError, buildWarning）。
 缓存支持（cache 选项）。
 多核并行压缩（cpus 选项）。
+
+
+Terser 的作用
+
+代码压缩（Minification）：
+移除空格、换行和注释。
+重命名变量和函数（mangling），缩短代码。
+删除未使用的代码（dead code elimination）。
+性能优化：
+压缩后的代码文件体积更小，减少浏览器下载和解析时间，提升页面加载速度。
+支持高级优化，如内联函数、常量折叠等。
+
+
 /******* */
 

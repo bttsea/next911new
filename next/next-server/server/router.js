@@ -1,40 +1,22 @@
-// router.js
-const { parse } = require('url');
-const pathMatch = require('./lib/path-match');
+ // 引入必要的模块
+const { pathMatch } = require('./lib/path-match');
 
-/**
- * 创建路由匹配函数
- * @type {Function}
- */
+// 创建路由匹配函数
 const route = pathMatch();
 
-/**
- * 路由器类，用于服务端请求匹配和处理
- */
+// 定义路由器类
 class Router {
-  /**
-   * 构造函数，初始化路由列表
-   * @param {Array} routes - 初始路由数组
-   */
+  // 构造函数，初始化路由列表
   constructor(routes = []) {
     this.routes = routes;
   }
 
-  /**
-   * 添加新路由
-   * @param {Object} route - 路由对象，包含 match 和 fn
-   */
+  // 添加新路由到路由列表开头
   add(route) {
     this.routes.unshift(route);
   }
 
-  /**
-   * 匹配请求路径并返回处理函数
-   * @param {Object} req - HTTP 请求对象
-   * @param {Object} res - HTTP 响应对象
-   * @param {Object} parsedUrl - 解析后的 URL 对象
-   * @returns {Function|undefined} - 匹配的处理函数或 undefined
-   */
+  // 匹配请求路径并返回对应的处理函数
   match(req, res, parsedUrl) {
     const { pathname } = parsedUrl;
     for (const route of this.routes) {
@@ -46,12 +28,19 @@ class Router {
   }
 }
 
-/**
- * 导出路由匹配函数
- * @type {Function}
- */
-module.exports.route = route;
- 
+// 导出路由匹配函数和路由器类
+module.exports = {
+  route: route,
+  Router: Router
+};
+
+  
+
+
+
+
+
+
 
 /*
 保留了原有的路由逻辑：

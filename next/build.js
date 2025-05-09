@@ -368,14 +368,16 @@ async function compile() {
     babelCompileDir('server', 'dist/server'),
     babelCompileDir('build', 'dist/build'),
     babelCompileDir('export', 'dist/export'),
-    babelCompileDir('client', 'dist/client', true),
+    babelCompileDir('client', 'dist/client', true),   ///=== true 表示客户端
     babelCompileDir('lib', 'dist/lib'),
  
-    babelCompileDir('pages', 'dist/pages', true),
+    babelCompileDir('pages', 'dist/pages', true),    ///=== true 表示客户端
 
- 
-   runTSC('next-server/lib', 'dist/next-server/lib', { module: ts.ModuleKind.CommonJS }),
-   runTSC('next-server/server', 'dist/next-server/server', { module: ts.ModuleKind.CommonJS })
+
+    babelCompileDir('next-server/lib', 'dist/next-server/lib'),
+    babelCompileDir('next-server/server', 'dist/next-server/server'), 
+  /// runTSC('next-server/lib', 'dist/next-server/lib', { module: ts.ModuleKind.CommonJS }),
+   ///runTSC('next-server/server', 'dist/next-server/server', { module: ts.ModuleKind.CommonJS })
   ]);
 }
 
